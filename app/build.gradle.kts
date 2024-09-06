@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    kotlin("kapt")
 }
 
 android {
@@ -68,6 +69,10 @@ dependencies {
     implementation(libs.play.services.mlkit.text.recognition.common)
     implementation(libs.play.services.mlkit.text.recognition)
     implementation(libs.hilt.android)
+
+    // Room components
+    implementation (libs.androidx.room.runtime)
+    kapt(libs.androidx.room.compiler.v251) // Use the correct version
 
     // For ViewModel Injection
     implementation (libs.androidx.hilt.lifecycle.viewmodel)

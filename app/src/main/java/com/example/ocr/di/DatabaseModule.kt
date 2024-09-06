@@ -1,7 +1,8 @@
 package com.example.ocr.di
 
 import android.content.Context
-import com.example.ocr.data.dao.ListItemDao
+import androidx.room.Room
+import com.example.ocr.data.dao.OcrListItemDao
 import com.example.ocr.data.database.AppDatabase
 import dagger.Module
 import dagger.Provides
@@ -17,11 +18,15 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext appContext: Context): AppDatabase {
-        return AppDatabase.getDatabase(appContext)
+        return Room.databaseBuilder(
+            appContext,
+            AppDatabase::class.java,
+            "app_database"
+        ).build()
     }
 
     @Provides
-    fun provideListItemDao(appDatabase: AppDatabase): ListItemDao {
+    fun provideListItemDao(appDatabase: AppDatabase): OcrListItemDao {
         return appDatabase.listItemDao()
     }
 

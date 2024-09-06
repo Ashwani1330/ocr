@@ -1,6 +1,5 @@
 package com.example.ocr.viewModel
 
-import android.graphics.Bitmap
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -11,20 +10,15 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.ocr.data.dao.ListItemDao
+import com.example.ocr.data.dao.OcrListItemDao
 import com.example.ocr.data.model.OcrListItem
 import com.example.ocr.utils.TextAnalyzer
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.mlkit.vision.text.Text
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class MainViewModel @Inject constructor(
-    private val listItemDao: ListItemDao
+class MainViewModel (
+    private val listItemDao: OcrListItemDao
 ): ViewModel() {
 
     private val cachedHashes = mutableSetOf<Int>()
@@ -48,20 +42,22 @@ class MainViewModel @Inject constructor(
     private fun storeParagraph(paragraph: String) {
         viewModelScope.launch {
             val item = OcrListItem(paragraph = paragraph, hash = paragraph.hashCode(), imagePath = null)
-            listItemDao.insert(item)
+            // listItemDao.insertItem(item)
             cachedHashes.add(paragraph.hashCode())
 
             // Update LiveData to reflect changes in the UI
             _paragraphs.value = _paragraphs.value.orEmpty() + item
+            println(_paragraphs)
+            println(item)
         }
     }
 
-    private val _bitmaps = MutableStateFlow<List<Bitmap>>(emptyList())
-    val bitmaps = _bitmaps.asStateFlow()
+    /* private val _bitmaps = MutableStateFlow<List<Bitmap>>(emptyList())
+     val bitmaps = _bitmaps.asStateFlow()
 
-    fun onTakePhoto(bitmap: Bitmap) {
-        _bitmaps.value += bitmap
-    }
+     fun onTakePhoto(bitmap: Bitmap) {
+         _bitmaps.value += bitmap
+     }*/
 
     // Initialize and start the camera
     fun startCamera(
@@ -73,7 +69,7 @@ class MainViewModel @Inject constructor(
             val cameraProvider = cameraProviderFuture.get()
 
             val preview = androidx.camera.core.Preview.Builder().build().also {
-                it.setSurfaceProvider(previewView.surfaceProvider)
+                it.surfaceProvider = previewView.surfaceProvider
             }
 
             val imageAnalyzer = ImageAnalysis.Builder()

@@ -1,6 +1,7 @@
 [versions]
 activityKtx = "1.9.2"
 agp = "8.5.2"
+androidxRoomCompiler = "2.5.1"
 cameraCore = "1.4.0-rc01"
 fragmentKtx = "1.8.3"
 hiltAndroid = "2.44.2"
@@ -18,7 +19,10 @@ lifecycleViewmodelKtxVersion = "2.6.0"
 playServicesVision = "20.1.3"
 playServicesMlkitTextRecognitionCommon = "19.1.0"
 playServicesMlkitTextRecognition = "19.0.1"
+roomCompiler = "2.6.1"
+roomCompilerVersion = "2.5.0"
 roomKtx = "2.6.1"
+roomRuntime = "2.6.1"
 
 [libraries]
 androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activityKtx" }
@@ -35,6 +39,10 @@ androidx-hilt-lifecycle-viewmodel = { module = "androidx.hilt:hilt-lifecycle-vie
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose" }
 androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
 androidx-lifecycle-viewmodel-ktx-v260 = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtxVersion" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomCompiler" }
+androidx-room-compiler-v250 = { module = "androidx.room:room-compiler", version.ref = "roomCompilerVersion" }
+androidx-room-compiler-v251 = { module = "androidx.room:room-compiler", version.ref = "androidxRoomCompiler" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
