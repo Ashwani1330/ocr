@@ -2,6 +2,7 @@
 activityKtx = "1.9.2"
 agp = "8.5.2"
 androidxRoomCompiler = "2.5.1"
+annotation = "1.8.2"
 cameraCore = "1.4.0-rc01"
 fragmentKtx = "1.8.3"
 hiltAndroid = "2.44.2"
@@ -26,6 +27,7 @@ roomRuntime = "2.6.1"
 
 [libraries]
 androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activityKtx" }
+androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
 androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "cameraCore" }
 androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "cameraCore" }
 androidx-camera-extensions = { module = "androidx.camera:camera-extensions", version.ref = "cameraCore" }

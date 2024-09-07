@@ -25,7 +25,7 @@ class MainActivity : ComponentActivity() {
 
         // Initialize the database and DAO
         val database = AppDatabase.getDatabase(applicationContext)
-        val listItemDao = database.listItemDao()
+        val listItemDao = database.ocrListItemDao()
 
         // Create ViewModelFactory
         val viewModelFactory = MainViewModelFactory(listItemDao)

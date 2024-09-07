@@ -1,17 +1,22 @@
 package com.example.ocr.data.dao
 
+import androidx.lifecycle.LiveData
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import com.example.ocr.data.model.OcrListItem
 import androidx.room.Query
-
 
 @Dao
 interface OcrListItemDao {
 
-/*    @Insert
-    suspend fun insertItem(item: OcrListItem): Long*/
+   /* @Query("SELECT * FROM ocr_list_items WHERE hash = :hash LIMIT 1")
+    suspend fun getOcrListItemByHash(hash: Int): OcrListItem?*/
 
-/*    @Query("SELECT * FROM ocr_list_items")
-    suspend fun getAllItems(): List<OcrListItem>*/
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertOcrListItem(item: OcrListItem): Long
+
+    @Delete
+    suspend fun deleteOcrListItem(item: OcrListItem): Int
 }

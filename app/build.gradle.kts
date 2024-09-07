@@ -70,6 +70,9 @@ dependencies {
     implementation(libs.play.services.mlkit.text.recognition)
     implementation(libs.hilt.android)
 
+    // Annotations
+    implementation(libs.androidx.annotation)
+
     // Room components
     implementation (libs.androidx.room.runtime)
     kapt(libs.androidx.room.compiler.v251) // Use the correct version

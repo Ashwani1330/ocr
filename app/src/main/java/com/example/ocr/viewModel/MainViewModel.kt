@@ -42,7 +42,7 @@ class MainViewModel (
     private fun storeParagraph(paragraph: String) {
         viewModelScope.launch {
             val item = OcrListItem(paragraph = paragraph, hash = paragraph.hashCode(), imagePath = null)
-            // listItemDao.insertItem(item)
+            listItemDao.insertOcrListItem(item)
             cachedHashes.add(paragraph.hashCode())
 
             // Update LiveData to reflect changes in the UI

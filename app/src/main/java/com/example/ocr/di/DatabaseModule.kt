@@ -27,7 +27,7 @@ object DatabaseModule {
 
     @Provides
     fun provideListItemDao(appDatabase: AppDatabase): OcrListItemDao {
-        return appDatabase.listItemDao()
+        return appDatabase.ocrListItemDao()
     }
 
 }

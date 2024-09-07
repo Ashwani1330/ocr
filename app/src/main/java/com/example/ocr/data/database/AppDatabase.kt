@@ -7,11 +7,11 @@ import androidx.room.RoomDatabase
 import com.example.ocr.data.dao.OcrListItemDao
 import com.example.ocr.data.model.OcrListItem
 
-@Database(entities = [OcrListItem::class], version = 1, exportSchema = false)
+@Database(entities = [OcrListItem::class], version = 1)
 abstract class AppDatabase : RoomDatabase() {
 
     // Define the DAO
-    abstract fun listItemDao(): OcrListItemDao
+    abstract fun ocrListItemDao(): OcrListItemDao
 
     companion object {
         @Volatile
