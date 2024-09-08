@@ -24,5 +24,4 @@ object DatabaseModule {
     fun provideListItemDao(appDatabase: AppDatabase): ListItemDao {
         return appDatabase.listItemDao()
     }
-
 }

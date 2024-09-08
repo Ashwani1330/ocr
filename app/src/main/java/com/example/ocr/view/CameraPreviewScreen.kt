@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ocr.viewModel.MainViewModel
 
 @Composable
@@ -22,8 +21,8 @@ fun CameraPreviewScreen(viewModel: MainViewModel) {
     }
     val lifecycleOwner = LocalLifecycleOwner.current
     AndroidView(
-        factory = { context ->
-            PreviewView(context).apply {
+        factory = { ctx ->
+            PreviewView(ctx).apply {
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
@@ -35,4 +34,3 @@ fun CameraPreviewScreen(viewModel: MainViewModel) {
         modifier = Modifier.fillMaxHeight(0.5f)
     )
 }
-

@@ -34,5 +34,4 @@ class TextAnalyzer(private val onTextDetected: (List<Text.TextBlock>) -> Unit): 
                 }
         }
     }
-
 }

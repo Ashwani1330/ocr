@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        if (!has_camera_permission()) {
+        if (!hasCameraPermission()) {
             ActivityCompat.requestPermissions(
                 this,
                 CAMERAX_PERMISSIONS,
@@ -30,13 +30,12 @@ class MainActivity : ComponentActivity() {
         }
         setContent {
             OcrTheme {
-                // MainScreen(context = this)
                 CameraPreviewScreen(viewModel = viewModel)
             }
         }
     }
 
-    private fun has_camera_permission(): Boolean {
+    private fun hasCameraPermission(): Boolean {
         return CAMERAX_PERMISSIONS.all {
             ContextCompat.checkSelfPermission(
                 applicationContext,

@@ -6,7 +6,7 @@ import androidx.room.Query
 import com.example.ocr.data.model.OcrListItem
 
 @Dao
-interface ListItemDao {
+interface   ListItemDao {
 
     @Insert
     suspend fun insert(item: OcrListItem)
