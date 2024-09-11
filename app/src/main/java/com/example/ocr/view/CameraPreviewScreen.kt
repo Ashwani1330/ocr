@@ -90,9 +90,8 @@ fun CameraPreviewScreen(viewModel: MainViewModel) {
                         }
                     } else {
                         items(paragraphs) { item ->
-                            val bitmap = bitmaps.find { it.hashCode() == item.hash }
-                            val defaultBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
-                            ParagraphCard(item, bitmap ?: defaultBitmap)
+                            val bitmap = bitmaps[item.hash] ?: Bitmap.createBitmap(60, 60, Bitmap.Config.ARGB_8888)
+                            ParagraphCard(item, bitmap)
                             Spacer(modifier = Modifier.height(8.dp))
                         }
                     }

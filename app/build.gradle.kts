@@ -96,6 +96,8 @@ dependencies {
 
     // ML Kit
     implementation("com.google.mlkit:text-recognition:16.0.0")
+    implementation("com.google.mlkit:common:18.5.0")
+
 
     // Room DB
     val room_version = "2.6.1"
