@@ -1,6 +1,7 @@
 package com.example.ocr.view
 
 import android.graphics.Bitmap
+import android.graphics.Matrix
 import android.util.Log
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -40,7 +41,7 @@ import com.example.ocr.data.model.OcrListItem
 import com.example.ocr.viewModel.MainViewModel
 
 @Composable
-fun CameraPreviewScreen(viewModel: MainViewModel) {
+fun CameraPreviewScreen(viewModel: MainViewModel, modifier: Any) {
 
     val context = LocalContext.current
     val cameraProviderFuture = remember {
@@ -91,7 +92,8 @@ fun CameraPreviewScreen(viewModel: MainViewModel) {
                     } else {
                         items(paragraphs) { item ->
                             val bitmap = bitmaps[item.hash] ?: Bitmap.createBitmap(60, 60, Bitmap.Config.ARGB_8888)
-                            ParagraphCard(item, bitmap)
+                            val rotatedImage = bitmap.rotate(90f)
+                            ParagraphCard(item, rotatedImage)
                             Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
@@ -130,4 +132,10 @@ fun ParagraphCard(item: OcrListItem, bitmap: Bitmap) {
             )
         }
     }
+}
+
+// Function to rotate a Bitmap by 90 degrees clockwise
+private fun Bitmap.rotate(degrees: Float = 90f): Bitmap {
+    val matrix = Matrix().apply { postRotate(degrees) }
+    return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
 }

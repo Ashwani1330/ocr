@@ -1,7 +1,14 @@
 package com.example.ocr.viewModel
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageFormat
+import android.graphics.YuvImage
+import android.util.Log
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageProxy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
@@ -19,18 +26,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.ImageFormat
-import android.graphics.YuvImage
-import android.util.Log
-import androidx.annotation.OptIn
-import androidx.camera.core.ExperimentalGetImage
-import androidx.camera.core.ImageProxy
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.text.TextRecognition
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import javax.inject.Inject
 
 /*
 @HiltViewModel
@@ -146,7 +145,7 @@ class MainViewModel @Inject constructor(
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val listItemDao: ListItemDao
+    private val listItemDao: ListItemDao,
 ) : ViewModel() {
 
     private val cachedHashes = mutableSetOf<Int>()
@@ -156,12 +155,25 @@ class MainViewModel @Inject constructor(
     private val _bitmaps = MutableStateFlow<Map<Int, Bitmap>>(emptyMap())
     val bitmaps = _bitmaps.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            _paragraphs.postValue(listItemDao.getAllItems())
+        }
+    }
+
     // Process a detected paragraph
     private fun processParagraph(paragraph: String, bitmap: Bitmap) {
+        val normalizedParagraph = paragraph.trim().toLowerCase()
+        val hash = normalizedParagraph.hashCode()
+        if (!isDuplicate(hash)) {
+            storeParagraph(normalizedParagraph, bitmap)
+        }
+/*
         val hash = paragraph.hashCode()
         if (!isDuplicate(hash)) {
             storeParagraph(paragraph, bitmap)
         }
+*/
     }
 
     // Check if the paragraph is a duplicate
@@ -195,37 +207,52 @@ class MainViewModel @Inject constructor(
         lifecycleOwner: LifecycleOwner
     ) {
         cameraProviderFuture.addListener({
-            val cameraProvider = cameraProviderFuture.get()
+            try {
+                val cameraProvider = cameraProviderFuture.get()
 
-            val preview = androidx.camera.core.Preview.Builder().build().apply {
-                surfaceProvider = previewView.surfaceProvider
-            }
-
-            val imageAnalyzer = ImageAnalysis.Builder()
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build()
-                .apply {
-                    setAnalyzer(
-                        ContextCompat.getMainExecutor(previewView.context)
-                    ) { imageProxy ->
-                        val bitmap = imageProxy.convertToBitmap()
-                        bitmap?.let {
-                            // Pass bitmap and ImageProxy to TextAnalyzer
-                            val textAnalyzer = TextAnalyzer { textBlocks ->
-                                processTextBlocks(textBlocks, bitmap)
-                            }
-                            textAnalyzer.analyze(imageProxy)
-                        }
-                        imageProxy.close()
-                    }
+                val preview = androidx.camera.core.Preview.Builder().build().apply {
+                    surfaceProvider = previewView.surfaceProvider
                 }
 
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                val imageAnalyzer = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+                    .apply {
+                        setAnalyzer(
+                            ContextCompat.getMainExecutor(previewView.context)
+                        ) { imageProxy ->
+                            val bitmap = imageProxy.convertToBitmap()
+                            bitmap?.let {
+                                // Pass bitmap and ImageProxy to TextAnalyzer
+                                val textAnalyzer = TextAnalyzer { textBlocks ->
+                                    processTextBlocks(textBlocks, bitmap)
+                                }
+                                textAnalyzer.analyze(imageProxy)
+                            }
+                        }
+                    }
 
-            cameraProvider.bindToLifecycle(
-                lifecycleOwner, cameraSelector, preview, imageAnalyzer
-            )
+                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+                cameraProvider.bindToLifecycle(
+                    lifecycleOwner, cameraSelector, preview, imageAnalyzer
+                )
+            } catch (e: Exception) {
+                Log.e("MainViewModel", "Camera initialization failed", e)
+            }
         }, ContextCompat.getMainExecutor(previewView.context))
+    }
+
+    private fun saveBitmapToFile(context: Context, bitmap: Bitmap, fileName: String): String {
+        val file = File(context.filesDir, "$fileName.png")
+        FileOutputStream(file).use { out ->
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+        }
+        return file.absolutePath
+    }
+
+     suspend fun getAllScannedItems(): List<OcrListItem> {
+        return listItemDao.getAllItems()
     }
 
     private fun processTextBlocks(textBlocks: List<Text.TextBlock>, bitmap: Bitmap) {

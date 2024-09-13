@@ -8,8 +8,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.navigation.compose.rememberNavController
 import com.example.ocr.ui.theme.OcrTheme
-import com.example.ocr.view.CameraPreviewScreen
+import com.example.ocr.utils.AppNavigation
 import com.example.ocr.viewModel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -30,7 +31,17 @@ class MainActivity : ComponentActivity() {
         }
         setContent {
             OcrTheme {
-                CameraPreviewScreen(viewModel = viewModel)
+/*
+                val innerPadding = 0.dp
+                CameraPreviewScreen(
+                    viewModel = viewModel,
+                    modifier = Modifier.padding(innerPadding)
+                )
+*/
+                val navController = rememberNavController()
+
+                // Set up navigation and content using AppNavigation
+                AppNavigation(navController = navController, viewModel = viewModel)
             }
         }
     }

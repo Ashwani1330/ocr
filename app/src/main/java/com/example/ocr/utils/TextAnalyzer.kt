@@ -1,14 +1,20 @@
 package com.example.ocr.utils
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageFormat
+import android.graphics.YuvImage
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
+import com.example.ocr.viewModel.MainViewModel
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import java.io.ByteArrayOutputStream
 
 
 /*
@@ -139,6 +145,7 @@ data class CardData(
     val imageFound: Boolean
 )*/
 
+/*
 class TextAnalyzer(
     private val onTextDetected: (List<Text.TextBlock>) -> Unit
 ) : ImageAnalysis.Analyzer {
@@ -148,7 +155,8 @@ class TextAnalyzer(
     private var lastProcessedTime = 0L
     private var lastImageHash: Int? = null
 
-    /*@OptIn(ExperimentalGetImage::class)
+    */
+/*@OptIn(ExperimentalGetImage::class)
     override fun analyze(imageProxy: ImageProxy) {
         val mediaImage = imageProxy.image
         if (mediaImage != null) {
@@ -182,11 +190,13 @@ class TextAnalyzer(
                 }
         }
     }
-*/
+*//*
+
 
     @OptIn(ExperimentalGetImage::class)
     override fun analyze(imageProxy: ImageProxy) {
         val mediaImage = imageProxy.image
+        val bitmap = imageProxy.convertToBitmap()
         if (mediaImage != null) {
             val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
 
@@ -216,18 +226,30 @@ class TextAnalyzer(
                     .addOnFailureListener { e ->
                         Log.e("TextAnalyzer", "Text recognition failed", e)
                     }
-            } finally {
+                    .addOnCompleteListener {
+                        imageProxy.close()
+                    }
+            } catch (e: Exception) {
+                Log.e("TextAnalyzer", "Text recognition failed", e)
                 imageProxy.close()
             }
+        } else {
+            imageProxy.close()
         }
     }
 
 
     private fun isNewDocument(currentText: String): Boolean {
+        // Add a check to discard short or meaningless text
+        if (currentText.length < 5 || currentText.filter { it.isLetter() }.length.toDouble() / currentText.length < 0.5) {
+            return false
+        }
         return lastDocumentText == null || !areDocumentsSimilar(lastDocumentText!!, currentText)
     }
 
     private fun areDocumentsSimilar(lastText: String, currentText: String): Boolean {
+*/
+/*
         val lastTextWords = lastText.split(" ")
         val currentTextWords = currentText.split(" ")
 
@@ -235,6 +257,15 @@ class TextAnalyzer(
         val similarity = commonWords.size.toDouble() / maxOf(lastTextWords.size, currentTextWords.size)
 
         return similarity > 0.8
+*//*
+
+        val lastTextWords = lastText.split("\\s+".toRegex()).filter { it.isNotBlank() }
+        val currentTextWords = currentText.split("\\s+".toRegex()).filter { it.isNotBlank() }
+
+        val commonWords = lastTextWords.intersect(currentTextWords.toSet())
+        val similarity = commonWords.size.toDouble() / maxOf(lastTextWords.size, currentTextWords.size)
+
+        return similarity > 0.9  // Increase similarity threshold to 90%
     }
 
     private fun calculateDelay(documentLength: Int): Long {
@@ -259,7 +290,8 @@ class TextAnalyzer(
         return cardDataList
     }
 
-    private fun checkForImageInParagraph(line: Text.Line): Boolean {
+    */
+/*private fun checkForImageInParagraph(line: Text.Line): Boolean {
         val boundingBox = line.boundingBox
         val imageKeywords = listOf("image", "photo", "figure", "diagram", "chart", "illustration", "map", "picture")
         val words = line.elements.map { it.text.toLowerCase() }
@@ -292,10 +324,206 @@ class TextAnalyzer(
         }
 
         return false
+    }*//*
+
+
+    private fun checkForImageInParagraph(line: Text.Line): Boolean {
+        val boundingBox = line.boundingBox ?: return false
+        val width = boundingBox.width()
+        val height = boundingBox.height()
+        val area = width * height
+        val textLength = line.text.length
+
+        val aspectRatio = width.toDouble() / height
+        val density = textLength / area.toDouble()
+
+        // Adjust the thresholds for better accuracy
+        return (aspectRatio < 0.3 || aspectRatio > 3.0 || density < 0.05)
     }
+
+    private fun getBitmapHash(bitmap: Bitmap): Int {
+        val resizedBitmap = Bitmap.createScaledBitmap(bitmap, 100, 100, false)  // Resize to reduce computation
+        var hash = 0
+        for (y in 0 until resizedBitmap.height) {
+            for (x in 0 until resizedBitmap.width) {
+                val pixel = resizedBitmap.getPixel(x, y)
+                hash = 31 * hash + pixel
+            }
+        }
+        return hash
+    }
+
+    // Convert ImageProxy to Bitmap
+    private fun ImageProxy.convertToBitmap(): Bitmap? {
+        val yBuffer = planes[0].buffer // Y
+        val uBuffer = planes[1].buffer // U
+        val vBuffer = planes[2].buffer // V
+
+        val ySize = yBuffer.remaining()
+        val uSize = uBuffer.remaining()
+        val vSize = vBuffer.remaining()
+
+        val nv21 = ByteArray(ySize + uSize + vSize)
+
+        yBuffer.get(nv21, 0, ySize)
+        vBuffer.get(nv21, ySize, vSize)
+        uBuffer.get(nv21, ySize + vSize, uSize)
+
+        val yuvImage = YuvImage(nv21, ImageFormat.NV21, width, height, null)
+        val out = ByteArrayOutputStream()
+        yuvImage.compressToJpeg(android.graphics.Rect(0, 0, width, height), 100, out)
+        val imageBytes = out.toByteArray()
+
+        return try {
+            BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Bitmap conversion failed", e)
+            null
+        }
+    }
+
+
 }
 
 data class CardData(
     val title: String,
     val imageFound: Boolean
-)
+)*/
+
+class TextAnalyzer(
+    private val onTextDetected: (List<Text.TextBlock>) -> Unit
+) : ImageAnalysis.Analyzer {
+
+    private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+    private var lastDocumentText: String? = null
+    private var lastProcessedTime = 0L
+    private var lastImageBitmap: Bitmap? = null
+
+    @OptIn(ExperimentalGetImage::class)
+    override fun analyze(imageProxy: ImageProxy) {
+        val mediaImage = imageProxy.image
+        if (mediaImage != null) {
+            val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+
+            // Check if enough time has passed since the last processing
+            val currentTime = System.currentTimeMillis()
+            if (currentTime - lastProcessedTime < 2000) {  // 2 seconds delay
+                imageProxy.close()
+                return
+            }
+
+            // Convert image to Bitmap for more detailed comparison
+            val bitmap = imageProxy.convertToBitmap()
+            if (bitmap == null || isSameImage(bitmap)) {
+                imageProxy.close()
+                return
+            }
+
+            // Use a try-finally block to ensure the image proxy is always closed
+            try {
+                recognizer.process(image)
+                    .addOnSuccessListener { visionText ->
+                        val documentText = visionText.text
+
+                        // Check if the document text is new or meaningful
+                        if (isNewDocument(documentText)) {
+                            lastProcessedTime = currentTime
+                            lastDocumentText = documentText
+                            lastImageBitmap = bitmap
+
+                            // Callback with the recognized text blocks
+                            onTextDetected(visionText.textBlocks)
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("TextAnalyzer", "Text recognition failed", e)
+                    }
+                    .addOnCompleteListener {
+                        imageProxy.close()
+                    }
+            } catch (e: Exception) {
+                Log.e("TextAnalyzer", "Text recognition failed", e)
+                imageProxy.close()
+            }
+        } else {
+            imageProxy.close()
+        }
+    }
+
+    // Check if the current document text is new or different
+    private fun isNewDocument(currentText: String): Boolean {
+        // Add a check to discard short or meaningless text
+        if (currentText.length < 5 || currentText.filter { it.isLetter() }.length.toDouble() / currentText.length < 0.5) {
+            return false
+        }
+        return lastDocumentText == null || !areDocumentsSimilar(lastDocumentText!!, currentText)
+    }
+
+    // Check if the image has changed meaningfully using bitmap comparison
+    private fun isSameImage(currentBitmap: Bitmap): Boolean {
+        lastImageBitmap?.let { lastBitmap ->
+            // Compare the last and current bitmap using a pixel difference or feature similarity
+            val similarity = compareBitmaps(lastBitmap, currentBitmap)
+            return similarity > 0.9 // Adjust threshold for acceptable similarity
+        }
+        return false
+    }
+
+    // Compare two bitmaps for similarity
+    private fun compareBitmaps(bmp1: Bitmap, bmp2: Bitmap): Double {
+        if (bmp1.width != bmp2.width || bmp1.height != bmp2.height) return 0.0
+
+        var diff = 0
+        for (y in 0 until bmp1.height) {
+            for (x in 0 until bmp1.width) {
+                val pixel1 = bmp1.getPixel(x, y)
+                val pixel2 = bmp2.getPixel(x, y)
+                if (pixel1 != pixel2) {
+                    diff++
+                }
+            }
+        }
+        val totalPixels = bmp1.width * bmp1.height
+        return 1.0 - (diff.toDouble() / totalPixels)
+    }
+
+    // Function to compare documents for similarity based on words
+    private fun areDocumentsSimilar(lastText: String, currentText: String): Boolean {
+        val lastTextWords = lastText.split(" ")
+        val currentTextWords = currentText.split(" ")
+
+        val commonWords = lastTextWords.intersect(currentTextWords.toSet())
+        val similarity = commonWords.size.toDouble() / maxOf(lastTextWords.size, currentTextWords.size)
+
+        return similarity > 0.8
+    }
+
+    // Convert ImageProxy to Bitmap
+    private fun ImageProxy.convertToBitmap(): Bitmap? {
+        val yBuffer = planes[0].buffer // Y
+        val uBuffer = planes[1].buffer // U
+        val vBuffer = planes[2].buffer // V
+
+        val ySize = yBuffer.remaining()
+        val uSize = uBuffer.remaining()
+        val vSize = vBuffer.remaining()
+
+        val nv21 = ByteArray(ySize + uSize + vSize)
+
+        yBuffer.get(nv21, 0, ySize)
+        vBuffer.get(nv21, ySize, vSize)
+        uBuffer.get(nv21, ySize + vSize, uSize)
+
+        val yuvImage = YuvImage(nv21, ImageFormat.NV21, width, height, null)
+        val out = ByteArrayOutputStream()
+        yuvImage.compressToJpeg(android.graphics.Rect(0, 0, width, height), 100, out)
+        val imageBytes = out.toByteArray()
+
+        return try {
+            BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Bitmap conversion failed", e)
+            null
+        }
+    }
+}
